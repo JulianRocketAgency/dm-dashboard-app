@@ -1,0 +1,12 @@
+{
+  "name": "dm-dashboard-app",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "tauri": "tauri",
+    "icons": "tauri icon assets/icon.png"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "2.9.6"
+  }
+}
