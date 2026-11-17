@@ -8,8 +8,18 @@ permissions:
   contents: write
 
 jobs:
-  mac:
-    runs-on: macos-latest
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest
+            rust_targets: aarch64-apple-darwin,x86_64-apple-darwin
+            args: --target universal-apple-darwin --bundles app,dmg
+          - os: windows-latest
+            rust_targets: ""
+            args: --bundles nsis
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -17,7 +27,7 @@ jobs:
           node-version: 22
       - uses: dtolnay/rust-toolchain@stable
         with:
-          targets: aarch64-apple-darwin,x86_64-apple-darwin
+          targets: ${{ matrix.rust_targets }}
       - uses: swatinem/rust-cache@v2
         with:
           workspaces: "./src-tauri -> target"
@@ -30,7 +40,7 @@ jobs:
         with:
           tagName: ${{ github.ref_name }}
           releaseName: "DM Dashboard ${{ github.ref_name }}"
-          releaseBody: "Download het .dmg-bestand hieronder en sleep DM Dashboard naar Programma's. Bestaande installaties updaten zichzelf: de app meldt de nieuwe versie en je klikt op Nu updaten."
+          releaseBody: "Mac: download het .dmg-bestand en sleep DM Dashboard naar Programma's. Windows: download het .exe-bestand en voer het uit. Bestaande installaties updaten zichzelf: de app meldt de nieuwe versie en je klikt op Nu updaten. Zie de README voor de eerste keer openen."
           releaseDraft: false
           prerelease: false
-          args: --target universal-apple-darwin
+          args: ${{ matrix.args }}

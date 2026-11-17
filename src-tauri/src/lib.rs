@@ -74,21 +74,6 @@ pub fn run() {
             let check = MenuItem::with_id(h, "check_updates", "Controleer op updates…", true, None::<&str>)?;
             let reload = MenuItem::with_id(h, "reload", "Vernieuwen", true, Some("CmdOrCtrl+R"))?;
 
-            let app_menu = Submenu::with_items(
-                h,
-                "DM Dashboard",
-                true,
-                &[
-                    &PredefinedMenuItem::about(h, Some("Over DM Dashboard"), None)?,
-                    &check,
-                    &PredefinedMenuItem::separator(h)?,
-                    &PredefinedMenuItem::hide(h, Some("Verberg DM Dashboard"))?,
-                    &PredefinedMenuItem::hide_others(h, Some("Verberg anderen"))?,
-                    &PredefinedMenuItem::show_all(h, Some("Toon alles"))?,
-                    &PredefinedMenuItem::separator(h)?,
-                    &PredefinedMenuItem::quit(h, Some("Stop DM Dashboard"))?,
-                ],
-            )?;
             let edit_menu = Submenu::with_items(
                 h,
                 "Bewerken",
@@ -103,22 +88,57 @@ pub fn run() {
                     &PredefinedMenuItem::select_all(h, Some("Selecteer alles"))?,
                 ],
             )?;
-            let view_menu = Submenu::with_items(
-                h,
-                "Weergave",
-                true,
-                &[&reload, &PredefinedMenuItem::fullscreen(h, Some("Volledig scherm"))?],
-            )?;
-            let window_menu = Submenu::with_items(
-                h,
-                "Venster",
-                true,
-                &[
-                    &PredefinedMenuItem::minimize(h, Some("Minimaliseer"))?,
-                    &PredefinedMenuItem::close_window(h, Some("Sluit venster"))?,
-                ],
-            )?;
-            let menu = Menu::with_items(h, &[&app_menu, &edit_menu, &view_menu, &window_menu])?;
+
+            #[cfg(target_os = "macos")]
+            let menu = {
+                let app_menu = Submenu::with_items(
+                    h,
+                    "DM Dashboard",
+                    true,
+                    &[
+                        &PredefinedMenuItem::about(h, Some("Over DM Dashboard"), None)?,
+                        &check,
+                        &PredefinedMenuItem::separator(h)?,
+                        &PredefinedMenuItem::hide(h, Some("Verberg DM Dashboard"))?,
+                        &PredefinedMenuItem::hide_others(h, Some("Verberg anderen"))?,
+                        &PredefinedMenuItem::show_all(h, Some("Toon alles"))?,
+                        &PredefinedMenuItem::separator(h)?,
+                        &PredefinedMenuItem::quit(h, Some("Stop DM Dashboard"))?,
+                    ],
+                )?;
+                let view_menu = Submenu::with_items(
+                    h,
+                    "Weergave",
+                    true,
+                    &[&reload, &PredefinedMenuItem::fullscreen(h, Some("Volledig scherm"))?],
+                )?;
+                let window_menu = Submenu::with_items(
+                    h,
+                    "Venster",
+                    true,
+                    &[
+                        &PredefinedMenuItem::minimize(h, Some("Minimaliseer"))?,
+                        &PredefinedMenuItem::close_window(h, Some("Sluit venster"))?,
+                    ],
+                )?;
+                Menu::with_items(h, &[&app_menu, &edit_menu, &view_menu, &window_menu])?
+            };
+
+            #[cfg(not(target_os = "macos"))]
+            let menu = {
+                let file_menu = Submenu::with_items(
+                    h,
+                    "Bestand",
+                    true,
+                    &[
+                        &check,
+                        &PredefinedMenuItem::separator(h)?,
+                        &PredefinedMenuItem::quit(h, Some("Afsluiten"))?,
+                    ],
+                )?;
+                let view_menu = Submenu::with_items(h, "Weergave", true, &[&reload])?;
+                Menu::with_items(h, &[&file_menu, &edit_menu, &view_menu])?
+            };
             app.set_menu(menu)?;
 
             // Controleer kort na het starten en daarna elke 4 uur op updates.
