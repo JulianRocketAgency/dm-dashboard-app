@@ -1,6 +1,6 @@
 [package]
 name = "dm-dashboard"
-version = "1.0.1"
+version = "1.0.2"
 description = "DM Projects dashboard"
 edition = "2021"
 

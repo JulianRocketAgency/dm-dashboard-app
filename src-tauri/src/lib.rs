@@ -64,7 +64,32 @@ async fn check_for_updates(app: AppHandle, manual: bool) {
     }
 }
 
+/// macOS start gedownloade apps vanuit een alleen-lezen "AppTranslocation"-kopie (of vanuit de dmg),
+/// waardoor updaten faalt. Kopieer de app dan naar Programma's, haal de quarantaine-vlag weg en start opnieuw.
+#[cfg(target_os = "macos")]
+fn relocate_to_applications() {
+    use std::process::Command;
+    let Ok(exe) = std::env::current_exe() else { return };
+    let path = exe.to_string_lossy().to_string();
+    if !(path.contains("/AppTranslocation/") || path.starts_with("/Volumes/")) {
+        return;
+    }
+    // .../DM Dashboard.app/Contents/MacOS/<bin> -> .../DM Dashboard.app
+    let Some(bundle) = exe.ancestors().nth(3) else { return };
+    let dest = "/Applications/DM Dashboard.app";
+    let _ = Command::new("rm").args(["-rf", dest]).status();
+    let copied = Command::new("ditto").arg(bundle).arg(dest).status().map(|s| s.success()).unwrap_or(false);
+    if !copied {
+        return;
+    }
+    let _ = Command::new("xattr").args(["-dr", "com.apple.quarantine", dest]).status();
+    let _ = Command::new("open").args(["-n", dest]).status();
+    std::process::exit(0);
+}
+
 pub fn run() {
+    #[cfg(target_os = "macos")]
+    relocate_to_applications();
     tauri::Builder::default()
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_dialog::init())
